@@ -1,4 +1,4 @@
-import type { Ball, Vec2 } from './types';
+import type { Ball, Vec2, PredictionLength } from './types';
 import {
   BALL_RADIUS,
   PLAYFIELD_LEFT,
@@ -32,6 +32,7 @@ export function predictShot(
   cuePower: number,
   maxBounces = 2,
   maxSteps = 200,
+  length: PredictionLength = 'long',
 ): PredictionResult {
   const segments: PredictionSegment[] = [];
   const willPocket: number[] = [];
@@ -55,7 +56,10 @@ export function predictShot(
   let firstHitId: number | null = null;
   let targetBallPath: { start: Vec2; end: Vec2 } | null = null;
   let bounces = 0;
+  let collisions = 0;
   const isCuePathFlags: boolean[] = [];
+
+  const maxCollisions = length === 'short' ? 1 : length === 'medium' ? 2 : Infinity;
 
   for (let step = 0; step < maxSteps; step++) {
     const nextPos = {
@@ -92,8 +96,8 @@ export function predictShot(
 
         const targetVel = v.mul(normal, speedAlongNormal * 0.9);
         const targetStart = { ...hitBall.pos };
-        let targetEnd = { ...hitBall.pos };
-        let tv = { ...targetVel };
+        const targetEnd = { ...hitBall.pos };
+        const tv = { ...targetVel };
 
         for (let t = 0; t < 80; t++) {
           targetEnd.x += tv.x;
@@ -121,6 +125,10 @@ export function predictShot(
       const normal = v.norm(v.sub(nextPos, hitBall.pos));
       simCue.vel = v.sub(simCue.vel, v.mul(normal, v.dot(simCue.vel, normal) * (1 + RESTITUTION_BALL) * 0.5));
       currentPos = { ...nextPos };
+
+      collisions++;
+      if (collisions >= maxCollisions) break;
+
       continue;
     }
 
@@ -149,6 +157,10 @@ export function predictShot(
       segments.push({ start: { ...currentPos }, end: { ...nextPos }, isCuePath: true, isSolid: false });
       isCuePathFlags.push(false);
       if (bounces >= maxBounces) break;
+
+      collisions++;
+      if (collisions >= maxCollisions) break;
+
       currentPos = { ...nextPos };
       simCue.vel.x *= Math.pow(FRICTION, 2);
       simCue.vel.y *= Math.pow(FRICTION, 2);

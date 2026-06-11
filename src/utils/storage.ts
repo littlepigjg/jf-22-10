@@ -1,4 +1,4 @@
-import type { ReplayFile } from '../game/types';
+import type { ReplayFile, PredictionLength } from '../game/types';
 
 const REPLAYS_KEY = 'billiards_replays';
 const SETTINGS_KEY = 'billiards_settings';
@@ -44,12 +44,16 @@ interface GameSettings {
   aiDifficulty: 'easy' | 'hard';
   showAimLine: boolean;
   volume: number;
+  aimLineOpacity: number;
+  predictionLength: PredictionLength;
 }
 
 const defaultSettings: GameSettings = {
   aiDifficulty: 'easy',
   showAimLine: true,
   volume: 0.7,
+  aimLineOpacity: 70,
+  predictionLength: 'long',
 };
 
 export function loadSettings(): GameSettings {

@@ -7,6 +7,7 @@ import type {
   GameState,
   Player,
   PlayMode,
+  PredictionLength,
   Shot,
 } from '../game/types';
 import { FoulType as FoulTypeEnum } from '../game/types';
@@ -26,13 +27,15 @@ import {
   stopRecording,
   generateReplay,
 } from '../game/replay';
-import { saveReplay } from '../utils/storage';
+import { saveReplay, saveSettings, loadSettings } from '../utils/storage';
 
 interface UIState {
   aimAngle: number;
   power: number;
   isCharging: boolean;
   showAimLine: boolean;
+  aimLineOpacity: number;
+  predictionLength: PredictionLength;
   selectedGameMode: GameMode;
   selectedPlayMode: PlayMode;
   selectedAIDifficulty: 'easy' | 'hard';
@@ -60,6 +63,8 @@ interface GameStore extends GameState, UIState {
   aiTakeTurn: () => void;
   tickAITimer: () => boolean;
   setShowAimLine: (v: boolean) => void;
+  setAimLineOpacity: (v: number) => void;
+  setPredictionLength: (v: PredictionLength) => void;
   setSelectedGameMode: (m: GameMode) => void;
   setSelectedPlayMode: (m: PlayMode) => void;
   setSelectedAIDifficulty: (d: 'easy' | 'hard') => void;
@@ -97,7 +102,10 @@ function createPlayers(
   return [p1, p2];
 }
 
-export const useGameStore = create<GameStore>((set, get) => ({
+export const useGameStore = create<GameStore>((set, get) => {
+  const savedSettings = loadSettings();
+
+  return {
   mode: '8ball',
   playMode: 'pvp',
   phase: 'setup',
@@ -119,7 +127,9 @@ export const useGameStore = create<GameStore>((set, get) => ({
   aimAngle: 0,
   power: 0,
   isCharging: false,
-  showAimLine: true,
+  showAimLine: savedSettings.showAimLine,
+  aimLineOpacity: savedSettings.aimLineOpacity,
+  predictionLength: savedSettings.predictionLength,
   selectedGameMode: '8ball',
   selectedPlayMode: 'pve',
   selectedAIDifficulty: 'easy',
@@ -334,7 +344,18 @@ export const useGameStore = create<GameStore>((set, get) => ({
     return true;
   },
 
-  setShowAimLine: (v) => set({ showAimLine: v }),
+  setShowAimLine: (v) => {
+    set({ showAimLine: v });
+    saveSettings({ showAimLine: v });
+  },
+  setAimLineOpacity: (v) => {
+    set({ aimLineOpacity: v });
+    saveSettings({ aimLineOpacity: v });
+  },
+  setPredictionLength: (v) => {
+    set({ predictionLength: v });
+    saveSettings({ predictionLength: v });
+  },
   setSelectedGameMode: (m) => set({ selectedGameMode: m }),
   setSelectedPlayMode: (m) => set({ selectedPlayMode: m }),
   setSelectedAIDifficulty: (d) => set({ selectedAIDifficulty: d }),
@@ -367,4 +388,4 @@ export const useGameStore = create<GameStore>((set, get) => ({
       replayId: null,
     });
   },
-}));
+}});

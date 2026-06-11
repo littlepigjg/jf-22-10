@@ -1,15 +1,17 @@
-import { useEffect } from 'react';
+import { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useGameStore } from '../stores/useGameStore';
 import GameCanvas from '../components/GameCanvas';
 import HUD from '../components/HUD';
 import PowerBar from '../components/PowerBar';
+import SettingsMenu from '../components/SettingsMenu';
 import {
-  Home, RotateCcw, Save, Eye, EyeOff } from 'lucide-react';
+  Home, RotateCcw, Save, Eye, EyeOff, Settings } from 'lucide-react';
 import { FoulType } from '../game/types';
 
 export default function GamePage() {
   const navigate = useNavigate();
+  const [showSettings, setShowSettings] = useState(false);
 
   const phase = useGameStore((s) => s.phase);
   const winner = useGameStore((s) => s.winner);
@@ -85,6 +87,14 @@ export default function GamePage() {
               </button>
 
               <button
+                onClick={() => setShowSettings(true)}
+                className="p-2.5 rounded-xl bg-zinc-800/60 hover:bg-zinc-800 border border-zinc-700/60 text-zinc-400 hover:text-amber-300 transition-all"
+                title="游戏设置"
+              >
+                <Settings className="w-4 h-4" />
+              </button>
+
+              <button
                 onClick={handleReset}
                 className="flex items-center gap-2 px-4 py-2.5 rounded-xl bg-zinc-800/60 hover:bg-zinc-800 border border-zinc-700/60 text-zinc-300 hover:text-amber-300 transition-all text-sm font-semibold"
               >
@@ -154,6 +164,8 @@ export default function GamePage() {
           </div>
         </div>
       </div>
+
+      {showSettings && <SettingsMenu onClose={() => setShowSettings(false)} />}
     </div>
   );
 }

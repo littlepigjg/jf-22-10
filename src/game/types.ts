@@ -65,6 +65,7 @@ export interface Player {
 
 export type GameMode = '8ball' | '9ball';
 export type PlayMode = 'pvp' | 'pve';
+export type PredictionLength = 'short' | 'medium' | 'long';
 export type GamePhase =
   | 'setup'
   | 'aiming'

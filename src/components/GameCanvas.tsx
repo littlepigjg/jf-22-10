@@ -29,6 +29,8 @@ export default function GameCanvas() {
   const power = useGameStore((s) => s.power);
   const isCharging = useGameStore((s) => s.isCharging);
   const showAimLine = useGameStore((s) => s.showAimLine);
+  const aimLineOpacity = useGameStore((s) => s.aimLineOpacity);
+  const predictionLength = useGameStore((s) => s.predictionLength);
   const freeBall = useGameStore((s) => s.freeBall);
   const foul = useGameStore((s) => s.foul);
   const foulMessage = useGameStore((s) => s.foulMessage);
@@ -154,10 +156,10 @@ export default function GameCanvas() {
 
     drawTable(ctx, t);
 
-    if (showAimLine && phase === 'aiming' && !freeBall) {
+    if (showAimLine && phase === 'aiming' && !freeBall && aimLineOpacity > 0) {
       const activePower = power > 0 ? power : 0.5;
-      const prediction = predictShot(curBalls, aimAngle, activePower, 1, 120);
-      drawAimLine(ctx, curBalls, prediction);
+      const prediction = predictShot(curBalls, aimAngle, activePower, 1, 120, predictionLength);
+      drawAimLine(ctx, curBalls, prediction, aimLineOpacity);
     }
 
     if (freeBall) {
@@ -249,16 +251,19 @@ export default function GameCanvas() {
     ctx.restore();
   };
 
-  const drawAimLine = (ctx: CanvasRenderingContext2D, curBalls: Ball[], prediction: ReturnType<typeof predictShot>) => {
+  const drawAimLine = (ctx: CanvasRenderingContext2D, curBalls: Ball[], prediction: ReturnType<typeof predictShot>, opacity: number) => {
     const cue = curBalls.find((b) => b.id === 0);
     if (!cue) return;
+
+    const alpha = opacity / 100;
 
     for (let i = 0; i < prediction.segments.length; i++) {
       const seg = prediction.segments[i];
       if (!seg.isCuePath) continue;
 
       ctx.save();
-      ctx.strokeStyle = seg.isSolid ? 'rgba(255,255,255,0.75)' : 'rgba(255,255,255,0.3)';
+      const baseAlpha = seg.isSolid ? 0.75 : 0.3;
+      ctx.strokeStyle = `rgba(255,255,255,${baseAlpha * alpha})`;
       ctx.lineWidth = 1.8;
       ctx.setLineDash(seg.isSolid ? [] : [6, 6]);
       ctx.lineDashOffset = 0;
@@ -271,7 +276,7 @@ export default function GameCanvas() {
 
     if (prediction.targetBallPath) {
       ctx.save();
-      ctx.strokeStyle = 'rgba(245,208,51,0.6)';
+      ctx.strokeStyle = `rgba(245,208,51,${0.6 * alpha})`;
       ctx.lineWidth = 1.6;
       ctx.setLineDash([5, 5]);
       ctx.beginPath();
@@ -283,7 +288,7 @@ export default function GameCanvas() {
 
     if (prediction.willPocket.length > 0) {
       ctx.save();
-      ctx.fillStyle = 'rgba(74,222,128,0.85)';
+      ctx.fillStyle = `rgba(74,222,128,${0.85 * alpha})`;
       ctx.font = 'bold 12px sans-serif';
       ctx.textAlign = 'left';
       const ids = prediction.willPocket.filter((i) => i !== 0).join(', ');
@@ -291,7 +296,7 @@ export default function GameCanvas() {
         ctx.fillText(`预测进球: ${ids}号`, cue.pos.x + 20, cue.pos.y - 25);
       }
       if (prediction.willPocket.includes(0)) {
-        ctx.fillStyle = 'rgba(248,113,113,0.9)';
+        ctx.fillStyle = `rgba(248,113,113,${0.9 * alpha})`;
         ctx.fillText('⚠ 白球可能落袋', cue.pos.x + 20, cue.pos.y - 45);
       }
       ctx.restore();
